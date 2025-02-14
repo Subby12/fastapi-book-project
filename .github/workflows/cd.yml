@@ -3,26 +3,34 @@ name: CD - Deploy to AWS
 on:
   push:
     branches:
-      - feature/*
       - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_USER_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.AWS_HOST }}
-          username: ubuntu
-          key: ${{ secrets.AWS_PRIVATE_KEY }}
-          script: |
-            cd fastapi-book-project  # Update if necessary
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            cd fastapi-book-project  # Change if your project is in a different directory
             git reset --hard
             git pull origin main
-            docker compose down || true  # Adjust for Docker Compose V2
+            
+            # Stop and rebuild containers
+            docker compose down || true  # Adjusted for Docker Compose V2
             docker compose up -d --build
+            
+            # Check running containers
             docker ps
+          EOF
