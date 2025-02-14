@@ -1,17 +1,19 @@
-from typing import OrderedDict
+from typing import List
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from api.db.schemas import Book, Genre, InMemoryDB
 
 router = APIRouter()
 db = InMemoryDB()
+
+# Initialize with sample books
 db.books = {
     1: Book(
         id=1,
         title="The Hobbit",
         author="J.R.R. Tolkien",
         publication_year=1937,
-        genre=Genre.SCI_FI,
+        genre=Genre.FANTASY,
     ),
     2: Book(
         id=2,
@@ -29,18 +31,17 @@ db.books = {
     ),
 }
 
+@router.get("/", response_model=List[Book], status_code=status.HTTP_200_OK)
+async def get_books():
+    books = list(db.get_books().values())
+    return [book for book in books]  # Return list of Book objects
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_book(book: Book):
     db.add_book(book)
     return JSONResponse(
         status_code=status.HTTP_201_CREATED, content=book.model_dump()
     )
-
-@router.get(
-    "/", response_model=OrderedDict[int, Book], status_code=status.HTTP_200_OK
-)
-async def get_books() -> OrderedDict[int, Book]:
-    return db.get_books()
 
 @router.put("/{book_id}", response_model=Book, status_code=status.HTTP_200_OK)
 async def update_book(book_id: int, book: Book) -> Book:
@@ -63,3 +64,4 @@ async def get_book(book_id: int) -> Book:
             content={"detail": f"Book with id {book_id} not found"}
         )
     return book
+
