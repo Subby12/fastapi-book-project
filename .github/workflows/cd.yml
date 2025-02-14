@@ -31,6 +31,6 @@ jobs:
             docker compose down || true  # Adjusted for Docker Compose V2
             docker compose up -d --build
             
-            # Check running containers
+            # Check running container
             docker ps
           EOF
