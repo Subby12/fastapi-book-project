@@ -13,7 +13,7 @@ db.books = {
         title="The Hobbit",
         author="J.R.R. Tolkien",
         publication_year=1937,
-        genre=Genre.FANTASY,
+        genre=Genre.SCI_FI,  # Changed from FANTASY to SCI_FI
     ),
     2: Book(
         id=2,
@@ -64,4 +64,3 @@ async def get_book(book_id: int) -> Book:
             content={"detail": f"Book with id {book_id} not found"}
         )
     return book
-
